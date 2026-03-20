@@ -61,7 +61,10 @@ if st.button("Calculate Total RM", type="primary", use_container_width=True):
             price = prices_non_mythic[tier]
             max_stars = 6 if rank == "Epic I" else 5
             
-            if i == start_idx:
+            # --- Logic fix for same rank or cross-rank calculation ---
+            if start_r == end_r:
+                needed = target_s_in_rank - current_s
+            elif i == start_idx:
                 needed = max_stars - current_s
             elif not is_end_mythic and rank == end_r:
                 needed = target_s_in_rank
@@ -100,7 +103,7 @@ if st.button("Calculate Total RM", type="primary", use_container_width=True):
                     break
 
     # 3. Final Output
-    if not grouped_report:
+    if not grouped_report or actual_total_stars <= 0:
         st.warning("No stars needed! Check your inputs.")
     else:
         header = f"{start_r} {current_s}⭐️ to {end_r} {target_s_in_rank}⭐️\\n\\n"
@@ -115,7 +118,6 @@ if st.button("Calculate Total RM", type="primary", use_container_width=True):
 
         st.subheader("Final Report")
         
-        # FIXED HTML COMPONENT
         copy_button_html = f"""
         <div id="wrapper" style="font-family: sans-serif; color: #262730;">
             <div id="copy-container" style="
