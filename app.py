@@ -9,14 +9,13 @@ ranks = [
     "Mythic"
 ]
 
-stars_in_rank_default = {"Grandmaster": 5, "Epic": 5, "Legend": 5}
-prices_non_mythic = {"Grandmaster": 1.5, "Epic": 2, "Legend": 2.5}
+prices_non_mythic = {"Grandmaster": 1.5, "Epic": 2.0, "Legend": 2.5}
 
 mythic_pricing = [
-    (0, 24, 4.5),   # Mythic
-    (25, 49, 5.0),  # Mythical Honor
-    (50, 99, 6.0),  # Mythical Glory
-    (100, 9999, 6.5)# Mythic Immortal
+    (0, 24, 5.0),   # Mythic
+    (25, 49, 5.5),  # Mythical Honor
+    (50, 99, 6.5),  # Mythical Glory
+    (100, 9999, 7.0)# Mythic Immortal
 ]
 
 def get_tier(rank_name):
@@ -39,11 +38,11 @@ with col2:
     st.subheader("Target Point")
     dropdown_values = ranks + ["Mythical Honor", "Mythical Glory", "Mythic Immortal"]
     end_r = st.selectbox("Target Rank", options=dropdown_values, index=len(dropdown_values)-4)
-    target_s_in_rank = st.number_input("Target Total Stars (e.g., 1)", min_value=0, value=1)
+    target_s_in_rank = st.number_input("Target Total Stars", min_value=0, value=1)
 
 if st.button("Calculate Total RM", type="primary", use_container_width=True):
-    report_text = ""
-    total_stars = 0
+    # Dictionary to hold grouped data: { "Epic": {"stars": 0, "price": 2.0}, ... }
+    grouped_report = {}
     total_price = 0.0
 
     # 1. Non-Mythic Logic
@@ -60,26 +59,18 @@ if st.button("Calculate Total RM", type="primary", use_container_width=True):
             tier = get_tier(rank)
             price = prices_non_mythic[tier]
             
-            # UPDATED RULE: Only Epic I requires 6 stars to promote to Legend V.
-            # Legend I to Mythic and all other tiers use 5 stars.
-            if rank == "Epic I":
-                max_stars = 6
-            else:
-                max_stars = 5
+            max_stars = 6 if rank == "Epic I" else 5
             
-            if i == start_idx:
-                needed = max_stars - current_s
-            else:
-                needed = max_stars
+            needed = max_stars - current_s if i == start_idx else max_stars
             
             if not is_end_mythic and rank == end_r:
                 needed = target_s_in_rank - (current_s if i == start_idx else 0)
 
             if needed > 0:
-                cost = max(0, float(needed) * price)
-                report_text += f"{rank} : {needed} stars x RM{price} = RM{cost:.2f}\\n"
-                total_stars += max(0, needed)
-                total_price += max(0, cost)
+                if tier not in grouped_report:
+                    grouped_report[tier] = {"stars": 0, "price": price}
+                grouped_report[tier]["stars"] += needed
+                total_price += float(needed) * price
         
         current_s_temp = 0 if is_end_mythic else current_s
     else:
@@ -94,41 +85,38 @@ if st.button("Calculate Total RM", type="primary", use_container_width=True):
             absolute_start = start_map.get(start_r, 0) + current_s_temp
         
         temp_s = absolute_start
-        mythic_segments = {}
-
         while temp_s < absolute_target:
             for low, high, price in mythic_pricing:
                 if low <= temp_s <= high:
-                    tier_name = "Mythic"
-                    if low == 25: tier_name = "Mythical Honor"
-                    elif low == 50: tier_name = "Mythical Glory"
-                    elif low >= 100: tier_name = "Mythic Immortal"
+                    tier_name = "Mythic" # Grouping all Mythic types under one label as requested
+                    if tier_name not in grouped_report:
+                        grouped_report[tier_name] = {"stars": 0, "price": price}
                     
-                    if tier_name not in mythic_segments:
-                        mythic_segments[tier_name] = {"count": 0, "price": price}
-                    mythic_segments[tier_name]["count"] += 1
+                    grouped_report[tier_name]["stars"] += 1
                     total_price += price
-                    total_stars += 1
                     temp_s += 1
                     break
-        
-        for name, data in mythic_segments.items():
-            report_text += f"{name} : {data['count']} stars x RM{data['price']} = RM{data['count']*data['price']:.2f}\\n"
 
-    # 3. Final Output
-    if not report_text or total_stars <= 0:
+    # 3. Build the Final Output String
+    if not grouped_report:
         st.warning("No stars needed! Check your inputs.")
     else:
-        # Prepare strings
-        final_summary = f"{report_text}--------------------------------\\nTotal Price : RM{total_price:.2f}"
+        # Header line
+        header = f"{start_r} {current_s}⭐️ to {end_r} {target_s_in_rank}⭐️\\n\\n"
+        
+        body = ""
+        for tier, data in grouped_report.items():
+            cost = data["stars"] * data["price"]
+            body += f"{tier} : {data['stars']}⭐️ x RM{data['price']} = RM{cost:.2f}\\n"
+        
+        final_summary = f"{header}{body}\\nTotal : RM{total_price:.2f}"
+        
         html_display = final_summary.replace("\\n", "<br>")
         js_copy_text = final_summary
 
         st.subheader("Final Report")
         
-        # We wrap the component in a container to help Streamlit manage mobile layering
         report_container = st.container()
-        
         with report_container:
             copy_button_html = f"""
             <div id="copy-container" style="
@@ -182,9 +170,5 @@ if st.button("Calculate Total RM", type="primary", use_container_width=True):
             }}
             </script>
             """
-            
-            # CRITICAL: Reduced height to 300 so it doesn't overlap the top dropdowns
-            # and set scrolling to 'no' to keep it clean on mobile
             components.html(copy_button_html, height=300, scrolling=True)
-            
             st.success(f"### Total Price: RM{total_price:.2f}")
