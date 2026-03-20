@@ -12,10 +12,10 @@ ranks = [
 prices_non_mythic = {"Grandmaster": 1.5, "Epic": 2.0, "Legend": 2.5}
 
 mythic_pricing = [
-    (0, 24, 5.0),   # Mythic
-    (25, 49, 5.5),  # Mythical Honor
-    (50, 99, 6.5),  # Mythical Glory
-    (100, 9999, 7.0)# Mythic Immortal
+    (0, 24, 5.0, "Mythic"),   
+    (25, 49, 5.5, "Mythical Honor"),  
+    (50, 99, 6.5, "Mythical Glory"),  
+    (100, 9999, 7.0, "Mythic Immortal")
 ]
 
 def get_tier(rank_name):
@@ -27,21 +27,21 @@ def get_tier(rank_name):
 st.set_page_config(page_title="MLBB Joki Calculator", page_icon="🎮")
 st.title("🎮 MLBB Joki Calculator")
 
-col1, col2 = st.columns(2)
+# Stacking vertically for better mobile dropdown behavior
+st.subheader("Starting Point")
+start_r = st.selectbox("Current Rank", options=ranks + ["Mythical Honor", "Mythical Glory", "Mythic Immortal"], index=9)
+current_s = st.number_input("Current Stars", min_value=0, value=1)
 
-with col1:
-    st.subheader("Starting Point")
-    start_r = st.selectbox("Starting Rank", options=ranks + ["Mythical Honor", "Mythical Glory", "Mythic Immortal"], index=9)
-    current_s = st.number_input("Current Stars in Rank", min_value=0, value=1)
+st.markdown("---")
 
-with col2:
-    st.subheader("Target Point")
-    dropdown_values = ranks + ["Mythical Honor", "Mythical Glory", "Mythic Immortal"]
-    end_r = st.selectbox("Target Rank", options=dropdown_values, index=len(dropdown_values)-4)
-    target_s_in_rank = st.number_input("Target Total Stars", min_value=0, value=1)
+st.subheader("Target Point")
+dropdown_values = ranks + ["Mythical Honor", "Mythical Glory", "Mythic Immortal"]
+end_r = st.selectbox("Target Rank", options=dropdown_values, index=len(dropdown_values)-4)
+target_s_in_rank = st.number_input("Target Total Stars", min_value=0, value=1)
+
+st.write("") 
 
 if st.button("Calculate Total RM", type="primary", use_container_width=True):
-    # Dictionary to hold grouped data: { "Epic": {"stars": 0, "price": 2.0}, ... }
     grouped_report = {}
     total_price = 0.0
 
@@ -60,7 +60,6 @@ if st.button("Calculate Total RM", type="primary", use_container_width=True):
             price = prices_non_mythic[tier]
             
             max_stars = 6 if rank == "Epic I" else 5
-            
             needed = max_stars - current_s if i == start_idx else max_stars
             
             if not is_end_mythic and rank == end_r:
@@ -76,7 +75,7 @@ if st.button("Calculate Total RM", type="primary", use_container_width=True):
     else:
         current_s_temp = current_s
 
-    # 2. Mythic Logic
+    # 2. Corrected Mythic Logic (Separated Tiers)
     if is_end_mythic:
         absolute_target = target_s_in_rank
         absolute_start = 0
@@ -86,9 +85,8 @@ if st.button("Calculate Total RM", type="primary", use_container_width=True):
         
         temp_s = absolute_start
         while temp_s < absolute_target:
-            for low, high, price in mythic_pricing:
+            for low, high, price, tier_name in mythic_pricing:
                 if low <= temp_s <= high:
-                    tier_name = "Mythic" # Grouping all Mythic types under one label as requested
                     if tier_name not in grouped_report:
                         grouped_report[tier_name] = {"stars": 0, "price": price}
                     
@@ -97,11 +95,10 @@ if st.button("Calculate Total RM", type="primary", use_container_width=True):
                     temp_s += 1
                     break
 
-    # 3. Build the Final Output String
+    # 3. Final Output String
     if not grouped_report:
         st.warning("No stars needed! Check your inputs.")
     else:
-        # Header line
         header = f"{start_r} {current_s}⭐️ to {end_r} {target_s_in_rank}⭐️\\n\\n"
         
         body = ""
@@ -109,8 +106,7 @@ if st.button("Calculate Total RM", type="primary", use_container_width=True):
             cost = data["stars"] * data["price"]
             body += f"{tier} : {data['stars']}⭐️ x RM{data['price']} = RM{cost:.2f}\\n"
         
-        final_summary = f"{header}{body}\\nTotal : RM{total_price:.2f}"
-        
+        final_summary = f"{header}{body}--------------------------------\\nTotal : RM{total_price:.2f}"
         html_display = final_summary.replace("\\n", "<br>")
         js_copy_text = final_summary
 
