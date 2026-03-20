@@ -119,71 +119,72 @@ if st.button("Calculate Total RM", type="primary", use_container_width=True):
     if not report_text or total_stars <= 0:
         st.warning("No stars needed! Check your inputs.")
     else:
+        # Prepare strings
         final_summary = f"{report_text}--------------------------------\\nTotal Price : RM{total_price:.2f}"
         html_display = final_summary.replace("\\n", "<br>")
         js_copy_text = final_summary
 
         st.subheader("Final Report")
         
-        copy_button_html = f"""
-        <div id="copy-container" style="
-            background-color: #f8f9fa; 
-            padding: 20px; 
-            border-radius: 12px; 
-            border: 1px solid #e0e0e0;
-            position: relative;
-            font-family: 'Courier New', monospace;
-            white-space: pre-wrap;
-            margin-bottom: 20px;
-            color: #262730;
-            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
-        ">
-            <div id="report-content" style="font-size: 14px; line-height: 1.6; padding-right: 40px;">{html_display}</div>
-            <button id="copy-btn" onclick="copyToClipboard()" style="
-                position: absolute;
-                top: 12px;
-                right: 12px;
-                background: #2ecc71;
-                border: none;
-                border-radius: 8px;
-                width: 38px;
-                height: 38px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                cursor: pointer;
-                box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-                transition: all 0.2s ease;
-            ">
-                <span id="icon" style="font-size: 1.2rem;">📋</span>
-            </button>
-        </div>
-
-        <script>
-        function copyToClipboard() {{
-            const textToCopy = `{js_copy_text}`.replace(/\\\\n/g, '\\n');
-            const textArea = document.createElement("textarea");
-            textArea.value = textToCopy;
-            document.body.appendChild(textArea);
-            textArea.select();
-            document.execCommand("copy");
-            document.body.removeChild(textArea);
-
-            const btn = document.getElementById("copy-btn");
-            const icon = document.getElementById("icon");
-            
-            icon.innerText = "✅";
-            btn.style.background = "#3498db";
-            btn.style.transform = "scale(1.1)";
-
-            setTimeout(() => {{
-                icon.innerText = "📋";
-                btn.style.background = "#2ecc71";
-                btn.style.transform = "scale(1.0)";
-            }}, 2000);
-        }}
-        </script>
-        """
+        # We wrap the component in a container to help Streamlit manage mobile layering
+        report_container = st.container()
         
-        components.html(copy_button_html, height=420)
-        st.success(f"### Total Price: RM{total_price:.2f}")
+        with report_container:
+            copy_button_html = f"""
+            <div id="copy-container" style="
+                background-color: #f8f9fa; 
+                padding: 15px; 
+                border-radius: 12px; 
+                border: 1px solid #e0e0e0;
+                position: relative;
+                font-family: sans-serif;
+                white-space: pre-wrap;
+                color: #262730;
+            ">
+                <div id="report-content" style="font-size: 14px; line-height: 1.6; padding-right: 45px;">{html_display}</div>
+                <button id="copy-btn" onclick="copyToClipboard()" style="
+                    position: absolute;
+                    top: 10px;
+                    right: 10px;
+                    background: #2ecc71;
+                    border: none;
+                    border-radius: 8px;
+                    width: 40px;
+                    height: 40px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                ">
+                    <span id="icon" style="font-size: 1.2rem;">📋</span>
+                </button>
+            </div>
+
+            <script>
+            function copyToClipboard() {{
+                const textToCopy = `{js_copy_text}`.replace(/\\\\n/g, '\\n');
+                const textArea = document.createElement("textarea");
+                textArea.value = textToCopy;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand("copy");
+                document.body.removeChild(textArea);
+
+                const btn = document.getElementById("copy-btn");
+                const icon = document.getElementById("icon");
+                icon.innerText = "✅";
+                btn.style.background = "#3498db";
+
+                setTimeout(() => {{
+                    icon.innerText = "📋";
+                    btn.style.background = "#2ecc71";
+                }}, 2000);
+            }}
+            </script>
+            """
+            
+            # CRITICAL: Reduced height to 300 so it doesn't overlap the top dropdowns
+            # and set scrolling to 'no' to keep it clean on mobile
+            components.html(copy_button_html, height=300, scrolling=True)
+            
+            st.success(f"### Total Price: RM{total_price:.2f}")
