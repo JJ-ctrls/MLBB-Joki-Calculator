@@ -29,14 +29,14 @@ st.title("🎮 MLBB Joki Calculator")
 
 st.subheader("Starting Point")
 start_r = st.selectbox("Current Rank", options=ranks + ["Mythical Honor", "Mythical Glory", "Mythic Immortal"], index=9)
-current_s = st.number_input("Current Stars", min_value=0, value=1)
+current_s = st.number_input("Current Stars", min_value=0, value=30)
 
 st.markdown("---")
 
 st.subheader("Target Point")
 dropdown_values = ranks + ["Mythical Honor", "Mythical Glory", "Mythic Immortal"]
-end_r = st.selectbox("Target Rank", options=dropdown_values, index=15) 
-target_s_in_rank = st.number_input("Target Total Stars", min_value=0, value=1)
+end_r = st.selectbox("Target Rank", options=dropdown_values, index=17) 
+target_s_in_rank = st.number_input("Target Total Stars", min_value=0, value=65)
 
 st.write("") 
 
@@ -61,7 +61,6 @@ if st.button("Calculate Total RM", type="primary", use_container_width=True):
             price = prices_non_mythic[tier]
             max_stars = 6 if rank == "Epic I" else 5
             
-            # --- Logic fix for same rank or cross-rank calculation ---
             if start_r == end_r:
                 needed = target_s_in_rank - current_s
             elif i == start_idx:
@@ -84,11 +83,14 @@ if st.button("Calculate Total RM", type="primary", use_container_width=True):
 
     # 2. Mythic Logic
     if is_end_mythic:
-        absolute_target = target_s_in_rank
-        absolute_start = 0
+        mythic_base_map = {"Mythic": 0, "Mythical Honor": 25, "Mythical Glory": 50, "Mythic Immortal": 100}
+        
         if is_start_mythic:
-            start_map = {"Mythic": 0, "Mythical Honor": 25, "Mythical Glory": 50, "Mythic Immortal": 100}
-            absolute_start = start_map.get(start_r, 0) + current_s_temp
+            absolute_start = current_s_temp # For Mythic+, input is already total stars
+        else:
+            absolute_start = 0
+            
+        absolute_target = target_s_in_rank # User input is target total stars
         
         temp_s = absolute_start
         while temp_s < absolute_target:
