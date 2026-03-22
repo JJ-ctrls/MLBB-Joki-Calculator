@@ -28,15 +28,15 @@ st.set_page_config(page_title="MLBB Joki Calculator", page_icon="🎮")
 st.title("🎮 MLBB Joki Calculator")
 
 st.subheader("Starting Point")
-start_r = st.selectbox("Current Rank", options=ranks + ["Mythical Honor", "Mythical Glory", "Mythic Immortal"], index=9)
-current_s = st.number_input("Current Stars", min_value=0, value=30)
+start_r = st.selectbox("Current Rank", options=ranks + ["Mythical Honor", "Mythical Glory", "Mythic Immortal"], index=10)
+current_s = st.number_input("Current Stars", min_value=0, value=1)
 
 st.markdown("---")
 
 st.subheader("Target Point")
 dropdown_values = ranks + ["Mythical Honor", "Mythical Glory", "Mythic Immortal"]
-end_r = st.selectbox("Target Rank", options=dropdown_values, index=17) 
-target_s_in_rank = st.number_input("Target Total Stars", min_value=0, value=65)
+end_r = st.selectbox("Target Rank", options=dropdown_values, index=15) 
+target_s_in_rank = st.number_input("Target Total Stars", min_value=0, value=1)
 
 st.write("") 
 
