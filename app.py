@@ -59,7 +59,13 @@ if st.button("Calculate Total RM", type="primary", use_container_width=True):
             
             tier = get_tier(rank)
             price = prices_non_mythic[tier]
-            max_stars = 6 if rank == "Epic I" else 5
+            
+            # --- Updated Promotion Logic ---
+            # Epic I and Legend I both require 6 stars to promote to the next tier
+            if rank == "Epic I" or rank == "Legend I":
+                max_stars = 6
+            else:
+                max_stars = 5
             
             if start_r == end_r:
                 needed = target_s_in_rank - current_s
